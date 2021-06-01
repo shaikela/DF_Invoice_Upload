@@ -8,9 +8,11 @@ import tkinter.font as tkFont
 import os
 import time
 import math
+import configparser
 #import pandas as pd
 
-
+config = configparser.ConfigParser()
+config.read('invoice.ini')
 url = "http://192.117.139.143:57772/rest/api/Shop/DeliveryFileToJsonPayable/"
 fields=['Supplier','Invoice#','Invoice Date','Total Invoice','Tracking#','Operation Date', 'Service Type','Entity Type',
         'Entity#', 'Charge Type','Amount','Charge description','Charge Type','Amount'
@@ -24,6 +26,7 @@ file_name = 'inv.csv'
 r = tk.Tk()
 
 global invoice_data_map
+global invoice_data_map_test
 global error
 global delivery_file
 frame = tk.Frame(r)
@@ -36,7 +39,6 @@ first_flag = True
 global charge_first_flag
 charge_first_flag =True
 
-
 def initialize():
     global invoice_data_map
     global error
@@ -48,7 +50,7 @@ def initialize():
                         'vat':tk.StringVar(),'air_trans_nis':tk.StringVar(), 'air_trans_usd':tk.StringVar(), 'invoice_amount_nis':tk.StringVar(),
                         "dollar_exchange_rate":tk.StringVar(), 'vat_usd':tk.StringVar()}
     error = tk.StringVar()
-    delivery_file = tk.StringVar()
+    delivery_file = tk.StringVar()    
 
 def abort(message):
     print(message)
@@ -76,6 +78,7 @@ def calc_invoice_amount():
 
 
 def handel_invocie_data():
+    
     if invoice_data_validation():
         clear_frame()
         if invoice_data_map['supplier_code'] =='UPS' or invoice_data_map['supplier_code'] =='DSV':
@@ -570,9 +573,26 @@ def update_supplier_info():
     error.set('')
     r.mainloop()
 
+def reload_test():
+    if test_mode.get()==1:
+        invoice_data_map['supplier'].set(config[invoice_data_map['supplier_code'].get()]['supplier'])
+        invoice_data_map['operational_number'].set(config[invoice_data_map['supplier_code'].get()]['supplier_ref'])
+        invoice_data_map['supplier_code'].set(config[invoice_data_map['supplier_code'].get()]['supplier_code'])
+        invoice_data_map['invoice_number'].set(config[invoice_data_map['supplier_code'].get()]['invoice_number'])
+        invoice_data_map['invoice_date'].set(config[invoice_data_map['supplier_code'].get()]['invoice_date'])
+        invoice_data_map['vat'].set(config[invoice_data_map['supplier_code'].get()]['vat_nis'])
+        invoice_data_map['air_trans_nis'].set(config[invoice_data_map['supplier_code'].get()]['air_trans_nis'])
+        invoice_data_map['air_trans_usd'].set(config[invoice_data_map['supplier_code'].get()]['air_trans_usd'])
+        invoice_data_map['tracking_number'].set(config[invoice_data_map['supplier_code'].get()]['track_number'])
+        invoice_data_map['chargeable_weight'].set(config[invoice_data_map['supplier_code'].get()]['chg_weight'])
+        invoice_data_map['invoice_amount_nis'].set(config[invoice_data_map['supplier_code'].get()]['invoice_amount_nis'])
 
+    frame.pack(side=tk.TOP, anchor=tk.NW)
+    frame.pack_propagate(0)
 
 def create_invoice_window():
+    global test_mode 
+    test_mode = tk.IntVar()
     global first_flag
     tk.Label(frame, text='enter invoice details:', font=title_font_style).grid(row=0, pady=(2, 5), columnspan=1)
     lb = tk.Label(frame, text='Supplier:',font = regular_font_style).grid(row=2, pady=10, )
@@ -593,6 +613,12 @@ def create_invoice_window():
         tk.Entry(frame, textvariable=invoice_data_map['invoice_amount_nis']).grid(row=7, column=1, padx=(15, 0))
         tk.Entry(frame, textvariable=invoice_data_map['air_trans_nis']).grid(row=12, column=1, padx=(15, 0))
         tk.Entry(frame, textvariable=invoice_data_map['air_trans_usd']).grid(row=13, column=1, padx=(15, 0))
+        if test_mode==1:
+            invoice_data_map['vat'].set('45')
+        # tk.Entry(frame, textvariable=tk.StringVar(r,'207.98')).grid(row=6, column=1, padx=(15, 0))
+        # tk.Entry(frame, textvariable=invoice_data_map['invoice_amount_nis']).grid(row=7, column=1, padx=(15, 0))
+        # tk.Entry(frame, textvariable=invoice_data_map['air_trans_nis']).grid(row=12, column=1, padx=(15, 0))
+        # tk.Entry(frame, textvariable=invoice_data_map['air_trans_usd']).grid(row=13, column=1, padx=(15, 0))
 
     else:
         tk.Label(frame, text='Invoice Amount:', font=regular_font_style).grid(row=7, pady=10)
@@ -616,7 +642,8 @@ def create_invoice_window():
     tk.Entry(frame, textvariable=invoice_data_map['chargeable_weight']).grid(row=8, column=1, padx=(15, 0))
     tk.Entry(frame, textvariable=invoice_data_map['number_of_bposts']).grid(row=9, column=1, padx=(15, 0))
     tk.Entry(frame, textvariable=invoice_data_map['tracking_number']).grid(row=11, column=1, padx=(15, 0))
-
+    # test_btn = tk.Button(frame, text='Test Mode', fg='blue', command = lambda:toggle(test_btn)).grid(row=2,column = 25,columnspan=2,pady=(0,5))
+    tk.Checkbutton(frame, text='Test Mode',variable=test_mode, onvalue=1, offvalue=0,command=reload_test).grid(row=1, column=550, padx=(15, 0))
     if first_flag:
         first_flag = False
     else:
@@ -628,10 +655,6 @@ def create_invoice_window():
 def next_widget(event):
     event.widget.tk_focusNext().focus()
     return "break"
-
-
-
-
 
 
 def main():

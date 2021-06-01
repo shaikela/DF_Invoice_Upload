@@ -18,6 +18,9 @@ class Box:
     def calc_chargeable_weight(self, value):
         res = 1
         split_str = self.dim.split('-')
+        if len(split_str)!=3:
+            print('bye')
+            exit()
         for dim in split_str:
             if dim.replace('.','',1).isdigit():
                 res = res * float(dim)
